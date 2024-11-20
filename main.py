@@ -1,37 +1,31 @@
 from syftbox.lib import Client
-import random
 import os
 from pathlib import Path
-import shutil
 import re
 
 
-def copy_random_pretrained_model(path: Path):
-    pattern = "pretrained_mnist_label_[0-9]\.pt$"
-    # check if there is any pretrained model in the path
-    pretrained_entries = os.listdir(path)
-    pretrained_model_exists = any([re.match(pattern, entry) for entry in pretrained_entries])
-    if pretrained_model_exists:
-        return
+def get_model_file(path: Path):
+    model_files = []
+    entries = os.listdir(path)
+    pattern = r"^pretrained_mnist_label_[0-9]\.pt$"
 
-    pretrained_model_path = Path("./") / "pretrained_models"
-    entries = os.listdir(pretrained_model_path)
-    # generate random number from the number of entries
-    random_index = random.randint(0, len(entries) - 1)
-    # get the random entry
-    random_entry = entries[random_index]
+    for entry in entries:
+        if re.match(pattern, entry):
+            model_files.append(entry)
 
-    print("Copying Pretrained Model: ", random_entry)
-    # copy the random entry to the path
-    shutil.copy2(pretrained_model_path / random_entry, path)
+    return model_files if model_files else None
     
 
 if __name__ == "__main__":
     client = Client.load()
 
     # Create Private Directory
-    private_path = Path(client.datasite_path ) / "private"
-    os.makedirs(private_path, exist_ok=True)
+    public_folder = client.my_datasite / "public"
+    model_files = get_model_file(public_folder)
 
-    # Copy a Randon Pretrained Model to private
-    copy_random_pretrained_model(private_path)
+    if not model_files:
+        print("[Pretraied Model Local]: No model files found in Public Folder.")
+        print("Kindly go to apis/pretrained_model_local/pretrained_models")
+        print(f"Pick a model file and copy it to the public folder (datasites/{client.email}/public)")
+    else:
+        print(f"[Pretrained Model Local]: Found model files: {model_files} in Public Folder.")
