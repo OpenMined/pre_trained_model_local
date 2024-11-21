@@ -1,33 +1,19 @@
-from syftbox.lib import Client
-import random
-import os
 from pathlib import Path
-import shutil
 
-AVAILABLE_MODELS = list(Path("./pretrained_models").glob("*.pt"))
+from syftbox.lib import Client
 
-
-def copy_random_pretrained_model(path: Path) -> None:
-    # check if there is any pretrained model in the path
-    pretrained_entries = list(Path(path).rglob("pretrained_mnist_label_*.pt"))
-    if len(pretrained_entries) > 0:
-        print(f"Pretrained model already exists at '{pretrained_entries[0]}'")
-        return
-
-    # get a random pretrained model
-    src_path = random.choice(AVAILABLE_MODELS)
-    target_path = path / src_path.name
-    print(f"Copying pretrained model to '{target_path}'")
-    # copy the random entry to the path
-    shutil.copy2(src_path, path)
-
+SCRIPT_DIR = Path(__file__).parent.absolute()
 
 if __name__ == "__main__":
     client = Client.load()
+    public_dir = Path(client.my_datasite) / "public"
+    model_files = list(public_dir.glob("pretrained_mnist_label_*.pt"))
 
-    # Create Private Directory
-    private_path = Path(client.my_datasite) / "private"
-    os.makedirs(private_path, exist_ok=True)
+    if not len(model_files):
+        print(f"No pre-trained model files found in {public_dir}.")
+        print(f"Kindly copy one or more from '{SCRIPT_DIR / "pretrained_models"}' and place them in your public folder.")
+        exit(0)
 
-    # Copy a Randon Pretrained Model to private
-    copy_random_pretrained_model(private_path)
+    print("Found pre-trained model(s):")
+    for p in model_files:
+        print(f"- {p}")
