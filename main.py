@@ -3,34 +3,30 @@ import random
 import os
 from pathlib import Path
 import shutil
-import re
+
+AVAILABLE_MODELS = list(Path("./pretrained_models").glob("*.pt"))
 
 
-def copy_random_pretrained_model(path: Path):
-    pattern = "pretrained_mnist_label_[0-9]\.pt$"
+def copy_random_pretrained_model(path: Path) -> None:
     # check if there is any pretrained model in the path
-    pretrained_entries = os.listdir(path)
-    pretrained_model_exists = any([re.match(pattern, entry) for entry in pretrained_entries])
-    if pretrained_model_exists:
+    pretrained_entries = list(Path(path).rglob("pretrained_mnist_label_*.pt"))
+    if len(pretrained_entries) > 0:
+        print(f"Pretrained model already exists at '{pretrained_entries[0]}'")
         return
 
-    pretrained_model_path = Path("./") / "pretrained_models"
-    entries = os.listdir(pretrained_model_path)
-    # generate random number from the number of entries
-    random_index = random.randint(0, len(entries) - 1)
-    # get the random entry
-    random_entry = entries[random_index]
-
-    print("Copying Pretrained Model: ", random_entry)
+    # get a random pretrained model
+    src_path = random.choice(AVAILABLE_MODELS)
+    target_path = path / src_path.name
+    print(f"Copying pretrained model to '{target_path}'")
     # copy the random entry to the path
-    shutil.copy2(pretrained_model_path / random_entry, path)
-    
+    shutil.copy2(src_path, path)
+
 
 if __name__ == "__main__":
     client = Client.load()
 
     # Create Private Directory
-    private_path = Path(client.datasite_path ) / "private"
+    private_path = Path(client.my_datasite) / "private"
     os.makedirs(private_path, exist_ok=True)
 
     # Copy a Randon Pretrained Model to private
